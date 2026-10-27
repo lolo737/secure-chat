@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' ws: wss:; img-src 'self' data: blob:; media-src 'self' blob:; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>SecureChat</title>
+  <meta name="theme-color" content="#0a0a0a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SecureChat">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<!-- First run: name + look, then keys are made on this phone -->
+<section id="setup" class="screen" hidden>
+  <div class="setup-card">
+    <h1 class="brand">SECURECHAT</h1>
+    <p class="muted">Encrypted, phone to phone. Your keys are made on this device and never leave it.</p>
+    <label for="setupName">Your name in chats</label>
+    <input id="setupName" type="text" maxlength="40" autocomplete="off" placeholder="e.g. Maya">
+    <label>Look</label>
+    <div class="theme-picker" id="setupThemes"></div>
+    <button class="primary big" id="setupGo">Create my keys</button>
+  </div>
+</section>
+
+<!-- Home: your peers, pair a new phone -->
+<section id="home" class="screen" hidden>
+  <header class="bar">
+    <div>
+      <div class="brand small">SECURECHAT</div>
+      <div class="muted tiny" id="meLine"></div>
+    </div>
+    <button class="icon" id="openSettings" aria-label="Settings">⚙</button>
+  </header>
+  <div class="pair-row">
+    <button class="primary" id="showCode">Show my code</button>
+    <button class="primary" id="scanCode">Scan a code</button>
+  </div>
+  <h2 class="label">Chats</h2>
+  <ul class="peers" id="peers"></ul>
+  <p class="muted empty" id="noPeers">No one yet. Show your code to the other phone, or scan theirs.</p>
+</section>
+
+<!-- Your QR: the other phone scans this -->
+<section id="code" class="screen" hidden>
+  <header class="bar">
+    <button class="icon" data-back aria-label="Back">‹</button>
+    <div class="brand small">SCAN TO PAIR</div>
+    <span></span>
+  </header>
+  <div class="qr-wrap"><canvas id="qr" width="300" height="300" aria-label="Your pairing QR code"></canvas></div>
+  <p class="center" id="codeStatus">On the other phone, tap <b>Scan a code</b> in SecureChat, or point its Camera at this and tap the banner.</p>
+  <p class="center muted tiny">Your key is public: safe to show or film. Fingerprint <span id="myFp"></span></p>
+  <div class="pair-row"><button id="copyLink">Copy invite link</button><button id="newCode">New code</button></div>
+</section>
+
+<!-- Camera scanner -->
+<section id="scan" class="screen" hidden>
+  <header class="bar">
+    <button class="icon" data-back aria-label="Back">‹</button>
+    <div class="brand small">SCANNING</div>
+    <span></span>
+  </header>
+  <div class="cam"><video id="cam" playsinline muted></video><div class="reticle"></div></div>
+  <p class="center" id="scanStatus">Hold the other phone's code inside the square.</p>
+  <canvas id="grab" hidden></canvas>
+</section>
+
+<!-- A conversation -->
+<section id="chat" class="screen" hidden>
+  <header class="bar">
+    <button class="icon" data-back aria-label="Back">‹</button>
+    <div class="who">
+      <div class="peer-name" id="chatName"></div>
+      <div class="muted tiny" id="chatState"></div>
+    </div>
+    <span></span>
+  </header>
+  <main class="msgs" id="msgs" aria-live="polite"></main>
+  <form class="composer" id="composer" autocomplete="off">
+    <label class="sdt" title="Self-destruct"><input type="checkbox" id="sd"><span aria-hidden="true">💥</span><span class="sr">Self-destruct</span></label>
+    <input id="text" type="text" maxlength="2000" placeholder="Message…" enterkeyhint="send">
+    <button class="primary" id="send" type="submit">Send</button>
+  </form>
+</section>
+
+<!-- Settings -->
+<section id="settings" class="screen" hidden>
+  <header class="bar">
+    <button class="icon" data-back aria-label="Back">‹</button>
+    <div class="brand small">SETTINGS</div>
+    <span></span>
+  </header>
+  <div class="setup-card">
+    <label for="setName">Your name in chats</label>
+    <input id="setName" type="text" maxlength="40">
+    <label>Look</label>
+    <div class="theme-picker" id="setThemes"></div>
+    <label for="setRelay">Relay address (leave blank for this site)</label>
+    <input id="setRelay" type="url" placeholder="wss://…/ws" autocapitalize="off" spellcheck="false">
+    <p class="muted tiny">Fingerprint: <span id="setFp"></span></p>
+    <button class="danger" id="wipe">Wipe everything on this phone</button>
+  </div>
+</section>
+
+<div class="toast" id="toast" role="status" hidden></div>
+<dialog id="confirm"><p id="confirmText"></p><div class="pair-row"><button id="confirmNo">Not now</button><button class="primary" id="confirmYes">Pair</button></div></dialog>
+
+<script src="vendor/nacl-fast.min.js"></script>
+<script src="vendor/jsQR.js"></script>
+<script src="vendor/qrcode.js"></script>
+<script src="js/config.js"></script>
+<script src="js/core.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

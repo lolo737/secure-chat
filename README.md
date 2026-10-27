@@ -16,6 +16,8 @@ A portable, peer-to-peer encrypted chat application designed for use as a **scre
 
 ---
 
+> 📱 **New: [SecureChat Mobile](mobile/README.md).** The same prop for iPhone and Android, paired with a camera. You're on the `mobile` branch.
+
 ## What it is
 
 A real, working encrypted chat interface — not a mockup, not a loop. Two devices, one USB stick, actual messages sending and receiving in real time. Built for productions that need something that looks authentic because it *is* authentic.
@@ -91,7 +93,7 @@ SecureChat is a Python desktop app (PyQt5), so it runs wherever Python and Qt do
 | Linux (Ubuntu, Debian, Fedora…) | ✅ | |
 | Windows 10 / 11 | ✅ | |
 | Windows 7 / 8.1 | ⚠️ | Use **Python 3.8**, the last version that supports them, and build the `.exe` on that machine. An `.exe` built on Windows 10 with a newer Python won't start on Windows 7. |
-| Android / iPhone | ❌ | Desktop only for now. A phone can **scan** the pairing QR code, but can't run the chat itself. |
+| Android / iPhone | 📱 | Use **[SecureChat Mobile](mobile/README.md)**, the phone edition on the `mobile` branch: installs from a link, pairs by camera. |
 
 **On Catalina:** if the optional OpenCV install (for reading QR photos) fails, pin an older release: `pip install "opencv-python-headless<4.9"`. Everything else installs as normal.
 

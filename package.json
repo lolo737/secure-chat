@@ -1,0 +1,17 @@
+{
+  "name": "securechat-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SecureChat Mobile: phone version of SecureChat, plus its relay",
+  "scripts": {
+    "start": "node relay/server.js",
+    "test": "node --test mobile/test/core.test.js mobile/test/relay.test.js",
+    "test:phones": "node mobile/test/phones.e2e.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
