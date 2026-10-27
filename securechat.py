@@ -13,6 +13,8 @@ Features:
 
 Run as server: python securechat.py --server
 Run as client: python securechat.py --client --host 192.168.1.x
+Show key as QR:  python securechat.py --show-key
+Add from photo:  python securechat.py --add-peer-qr photo.jpg
 """
 
 import sys, os, json, sqlite3, asyncio, argparse, base64, datetime
@@ -27,6 +29,12 @@ try:
     import websockets
 except ImportError:
     print("ERROR: pip install websockets"); sys.exit(1)
+
+# Optional: QR key exchange. qrcode draws the code; OpenCV reads one from a photo.
+try:
+    import qrcode
+except ImportError:
+    qrcode = None
 
 try:
     from PyQt5.QtWidgets import (
@@ -159,6 +167,95 @@ def load_or_create_keypair():
 
 def pub64(pk):
     return base64.b64encode(bytes(pk.public_key)).decode()
+
+
+# ── QR KEY EXCHANGE ───────────────────────────────────────────────────────────
+# A key travels as  securechat://peer?name=<display name>&key=<base64 public key>
+# Phone cameras read it as text, so it can be scanned, then pasted or AirDropped.
+
+KEY_URI_PREFIX = "securechat://peer?"
+
+def make_key_uri(name, pk):
+    from urllib.parse import urlencode
+    return KEY_URI_PREFIX + urlencode({"name": name or "Anonymous", "key": pub64(pk)})
+
+def parse_key_text(text):
+    """Accept a securechat:// link or a bare base64 key. Returns (name or None, key).
+    Raises ValueError if the key isn't a valid 32-byte X25519 public key."""
+    from urllib.parse import urlparse, parse_qs
+    text = (text or "").strip()
+    name = None
+    if text.startswith("securechat://"):
+        q = parse_qs(urlparse(text).query)
+        name = (q.get("name") or [None])[0]
+        text = (q.get("key") or [""])[0]
+    try:
+        raw = base64.b64decode(text, validate=True)
+    except Exception:
+        raise ValueError("That isn't a SecureChat key.")
+    if len(raw) != 32:
+        raise ValueError("That key is the wrong length for a SecureChat key.")
+    return name, text
+
+def qr_matrix(data):
+    if qrcode is None:
+        raise RuntimeError("QR codes need the qrcode package:  pip install qrcode")
+    q = qrcode.QRCode(border=3, error_correction=qrcode.constants.ERROR_CORRECT_M)
+    q.add_data(data); q.make(fit=True)
+    return q.get_matrix()
+
+def print_key_qr(name, pk):
+    """The terminal moment: a big QR of your key, ready to be photographed."""
+    uri = make_key_uri(name, pk)
+    rows = qr_matrix(uri)
+    print()
+    print("  ┌──────────────────────────────────────────────┐")
+    print("  │  SECURECHAT  ·  PUBLIC KEY  ·  SCAN TO PAIR  │")
+    print("  └──────────────────────────────────────────────┘")
+    print()
+    # Two QR rows per text line using half-block characters, printed black on
+    # white with ANSI colours so it scans in light and dark terminals alike.
+    ink, reset = "\033[30;47m", "\033[0m"
+    for y in range(0, len(rows), 2):
+        top, bot = rows[y], rows[y + 1] if y + 1 < len(rows) else [False] * len(rows[y])
+        line = "".join("█" if (t and b) else "▀" if t else "▄" if b else " " for t, b in zip(top, bot))
+        print("  " + ink + line + reset)
+    print()
+    print(f"  Name : {name}")
+    print(f"  Key  : {pub64(pk)}")
+    print()
+    print("  This key is public. It's safe to show, film or send.")
+    print("  Your private key never leaves this machine.")
+    print()
+
+def decode_qr_image(path):
+    """Read a SecureChat QR from a photo or screenshot."""
+    try:
+        import cv2
+    except ImportError:
+        raise RuntimeError("Reading QR photos needs OpenCV:  pip install opencv-python-headless")
+    img = cv2.imread(str(path))
+    if img is None:
+        raise ValueError(f"Couldn't open {path} as an image.")
+    det = cv2.QRCodeDetector()
+    text, _, _ = det.detectAndDecode(img)
+    if not text:  # phone photos are often large: try again smaller
+        h, w = img.shape[:2]
+        if max(h, w) > 1600:
+            f = 1600 / max(h, w)
+            text, _, _ = det.detectAndDecode(cv2.resize(img, (int(w * f), int(h * f))))
+    if not text:
+        raise ValueError("No QR code found. Try a straighter, sharper photo.")
+    return text
+
+def add_peer_from_text(text, name=None):
+    """Save a peer from a link or bare key. Returns the name used."""
+    found_name, key = parse_key_text(text)
+    name = (name or found_name or "").strip()
+    if not name:
+        raise ValueError("A bare key needs a name:  --add-peer NAME:KEY")
+    peers = load_peers(); peers[name] = key; save_peers(peers)
+    return name
 
 def encrypt(msg, my_key, their_pub64):
     box = nacl.public.Box(my_key, nacl.public.PublicKey(base64.b64decode(their_pub64)))
@@ -659,12 +756,16 @@ class SecureChatWindow(QMainWindow):
 
         copy_btn = QPushButton("Copy My Public Key"); copy_btn.clicked.connect(self._copy_pub)
         sl.addWidget(copy_btn)
+        qr_btn = QPushButton("Show My Key as QR"); qr_btn.clicked.connect(self._show_qr)
+        sl.addWidget(qr_btn)
 
         sl.addWidget(QLabel("PEERS", styleSheet="font-size:9px;font-weight:bold;letter-spacing:2px;margin-top:8px;"))
         self.peers_list = QListWidget(); self.peers_list.itemClicked.connect(self._select_peer)
         sl.addWidget(self.peers_list)
         add_p = QPushButton("+ Add Peer Key"); add_p.clicked.connect(self._add_peer)
         sl.addWidget(add_p)
+        add_qr = QPushButton("+ Add Peer from QR"); add_qr.clicked.connect(self._add_peer_qr)
+        sl.addWidget(add_qr)
 
         self.status_lbl = QLabel("Waiting for connection…")
         self.status_lbl.setAlignment(Qt.AlignCenter); self.status_lbl.setWordWrap(True)
@@ -872,11 +973,53 @@ class SecureChatWindow(QMainWindow):
     # ── PEERS ─────────────────────────────────────────────────────────────────
 
     def _add_peer(self):
-        name, ok = QInputDialog.getText(self, "Add Peer", "Peer name:")
-        if not ok or not name: return
-        key, ok = QInputDialog.getText(self, "Add Peer", f"Paste {name}'s public key:")
-        if not ok or not key: return
-        self.peers[name] = key.strip(); save_peers(self.peers); self._refresh_peers()
+        text, ok = QInputDialog.getText(self, "Add Peer",
+                                        "Paste their key or securechat:// link:")
+        if not ok or not text.strip(): return
+        try:
+            found, key = parse_key_text(text)
+        except ValueError as e:
+            QMessageBox.warning(self, "Add Peer", str(e)); return
+        name, ok = QInputDialog.getText(self, "Add Peer", "Peer name:", text=found or "")
+        if not ok or not name.strip(): return
+        self.peers[name.strip()] = key; save_peers(self.peers); self._refresh_peers()
+
+    def _add_peer_qr(self):
+        path, _ = QFileDialog.getOpenFileName(self, "Photo of their QR code", "",
+                                              "Images (*.png *.jpg *.jpeg *.heic *.bmp *.webp)")
+        if not path: return
+        try:
+            found, key = parse_key_text(decode_qr_image(path))
+        except (ValueError, RuntimeError) as e:
+            QMessageBox.warning(self, "Add Peer from QR", str(e)); return
+        name, ok = QInputDialog.getText(self, "Add Peer", "Peer name:", text=found or "")
+        if not ok or not name.strip(): return
+        self.peers[name.strip()] = key; save_peers(self.peers); self._refresh_peers()
+        self.status_lbl.setText(f"Added {name.strip()} from QR")
+
+    def _show_qr(self):
+        from PyQt5.QtGui import QImage, QPixmap
+        try:
+            rows = qr_matrix(make_key_uri(self.theme.get("username", "Anonymous"), self.pk))
+        except RuntimeError as e:
+            QMessageBox.information(self, "QR", str(e)); return
+        n, scale = len(rows), 10
+        img = QImage(n * scale, n * scale, QImage.Format_RGB32); img.fill(0xFFFFFFFF)
+        for y, row in enumerate(rows):
+            for x, on in enumerate(row):
+                if on:
+                    for dy in range(scale):
+                        for dx in range(scale):
+                            img.setPixel(x * scale + dx, y * scale + dy, 0xFF000000)
+        dlg = QDialog(self); dlg.setWindowTitle("My SecureChat key")
+        lay = QVBoxLayout(dlg)
+        pic = QLabel(); pic.setPixmap(QPixmap.fromImage(img)); pic.setAlignment(Qt.AlignCenter)
+        pic.setStyleSheet("background:#ffffff;padding:12px;border-radius:8px;")
+        lay.addWidget(pic)
+        cap = QLabel("Scan with a phone to pair. This key is public: safe to show, film or send.")
+        cap.setWordWrap(True); cap.setAlignment(Qt.AlignCenter); lay.addWidget(cap)
+        ok = QDialogButtonBox(QDialogButtonBox.Close); ok.rejected.connect(dlg.reject); lay.addWidget(ok)
+        dlg.exec_()
 
     def _refresh_peers(self):
         self.peers_list.clear()
@@ -1039,7 +1182,30 @@ def main():
     parser.add_argument("--port",   type=int, default=DEFAULT_PORT)
     parser.add_argument("--theme",  default=None,
                         help=f"Preset theme: {', '.join(THEMES.keys())}")
+    parser.add_argument("--show-key", action="store_true",
+                        help="Print your public key as a QR code in the terminal, then exit")
+    parser.add_argument("--add-peer", metavar="LINK_OR_NAME:KEY",
+                        help="Add a peer from a securechat:// link or NAME:KEY, then exit")
+    parser.add_argument("--add-peer-qr", metavar="PHOTO",
+                        help="Add a peer from a photo or screenshot of their QR code, then exit")
     args = parser.parse_args()
+
+    # Terminal-only key exchange: no window needed.
+    if args.show_key or args.add_peer or args.add_peer_qr:
+        pk = load_or_create_keypair()
+        try:
+            if args.show_key:
+                print_key_qr(load_theme().get("username", "Anonymous"), pk)
+            if args.add_peer:
+                text, name = args.add_peer, None
+                if not text.startswith("securechat://") and ":" in text:
+                    name, text = text.split(":", 1)
+                print(f"  ✓ Added peer: {add_peer_from_text(text, name)}")
+            if args.add_peer_qr:
+                print(f"  ✓ Added peer from QR: {add_peer_from_text(decode_qr_image(args.add_peer_qr))}")
+        except (ValueError, RuntimeError) as e:
+            print(f"  ✗ {e}"); sys.exit(1)
+        sys.exit(0)
 
     app = QApplication(sys.argv)
     app.setApplicationName("SecureChat")

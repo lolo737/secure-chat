@@ -102,9 +102,35 @@ No arguments — the app asks you on launch.
 
 ## Exchange Keys
 
+**The quick way: copy and paste**
+
 1. Click **"Copy My Public Key"** — send to your chat partner (it's public, not secret)
 2. They click **"+ Add Peer Key"** and paste yours in
 3. Done — all messages now encrypted end-to-end
+
+**The cinematic way: scan a QR code**
+
+Your public key can be shown as a QR code, in the terminal or in the app. Point a phone at it and the keys change hands in a second, which looks every bit as good on camera as it sounds.
+
+<p align="center"><img src="docs/terminal-qr.png" alt="A terminal showing a large black-and-white QR code under the heading SECURECHAT, PUBLIC KEY, SCAN TO PAIR" width="480"></p>
+
+```bash
+python securechat.py --show-key
+```
+
+That prints your key as a big QR code, black on white so it scans in light and dark terminals alike. Then your partner can do any of these:
+
+| They have… | They do… |
+|---|---|
+| A phone | Scan it with the camera. It reads a `securechat://` link; send it to their computer and paste it into **"+ Add Peer Key"**. The name fills itself in. |
+| A photo or screenshot of it | Click **"+ Add Peer from QR"** and pick the image, or run `python securechat.py --add-peer-qr photo.jpg` |
+| The link as text | `python securechat.py --add-peer "securechat://peer?name=…&key=…"` |
+
+In the app, **"Show My Key as QR"** puts the same code on screen.
+
+<p align="center"><img src="docs/app-qr.png" alt="The SecureChat window showing a QR code of the user's public key" width="320"></p>
+
+The QR holds only your **public** key and display name, so it's safe to show, film or post. Your private key never leaves your machine. Reading QR codes from photos needs OpenCV (`pip install opencv-python-headless`); everything else works without it.
 
 ---
 

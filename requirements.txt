@@ -2,3 +2,6 @@ pynacl>=1.5.0
 websockets>=11.0
 PyQt5>=5.15.0
 pyinstaller>=6.0
+qrcode>=7.4
+# Optional: read QR codes from photos (--add-peer-qr / "+ Add Peer from QR")
+opencv-python-headless>=4.8
