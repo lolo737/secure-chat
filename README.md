@@ -156,7 +156,7 @@ If your production falls into the not-free category, get in touch. We can work s
 
 Not required but genuinely appreciated:
 
-> *Chat interface prop: customable.chat — github.com/lolo737/customable.chat.for.use.in.TV.series*
+> *Chat interface prop: SecureChat — github.com/lolo737/securechat*
 
 ---
 
