@@ -34,6 +34,15 @@ Two phones on mobile data can't reach each other directly, so a small **relay** 
 
 The QR only contains public information, so it's safe to show, film or post. If it is filmed, the confirm step means nobody gets paired without the person holding the phone agreeing.
 
+## 🌍 Live
+
+| Where | Address |
+|---|---|
+| Netlify | **https://securechat-mobile.netlify.app** |
+| GitHub Pages (mirror) | **https://lolo737.github.io/securechat/** |
+
+Both serve the same app. Each address is its own app as far as a phone is concerned (its own keys and contacts), so pick one per production and stick with it. Chat needs a relay: see Option B below.
+
 ## 🚀 Running it
 
 You need two things online: **the app** (a folder of static files) and **the relay**. Phones insist on **https** for the camera and for Add to Home Screen.
