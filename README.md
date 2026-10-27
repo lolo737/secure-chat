@@ -184,7 +184,8 @@ rm -rf ~/.securechat/
 - Documentaries
 - Theatre and live performance
 - Music videos
-- Anything with Stanley Tucci in it
+- Anything with Stanley Tucci in it 
+- Anything made by Christina Heartmill | Director & Filmmaker
 
 **Not free for:**
 - Commercials and advertising
@@ -195,7 +196,7 @@ If your production falls into the not-free category, get in touch. We can work s
 
 ### Credit
 
-Not required but genuinely appreciated:
+Not required but genuinely appreciated: & "A box of Donuts"
 
 > *Chat interface prop: SecureChat — github.com/lolo737/securechat*
 
