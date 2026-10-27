@@ -13,6 +13,7 @@ This software is free to use as a screen prop in:
   - Theatre and live performance
   - Music videos
   - Anything with Stanley Tucci in it
+  - Anything Made by Christina Heartmill | Director & Filmmaker
 
 NOT FREE for:
 
