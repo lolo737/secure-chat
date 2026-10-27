@@ -577,9 +577,16 @@ class Bubble(QFrame):
         radius = theme.get("radius_mine" if is_mine else "radius_theirs", "10px")
         bw     = theme.get("border_width", "1px")
 
+        # Qt wants each corner separately, and the selector is scoped to this
+        # bubble so its border doesn't leak onto the QLabels (which are QFrames too).
+        corners = (radius.split() + [radius] * 4)[:4] if len(radius.split()) == 4 else [radius] * 4
+        self.setObjectName("bubble")
         self.setStyleSheet(
-            f"QFrame{{background:{bg};border-radius:{radius};"
-            f"border:{bw} solid {border};}}")
+            f"QFrame#bubble{{background:{bg};"
+            f"border-top-left-radius:{corners[0]};border-top-right-radius:{corners[1]};"
+            f"border-bottom-right-radius:{corners[2]};border-bottom-left-radius:{corners[3]};"
+            f"border:{bw} solid {border};}}"
+            f"QFrame#bubble QLabel{{background:transparent;border:none;}}")
         self.setMaximumWidth(520)
 
         if sd and not is_mine and msg_id and on_destruct:
@@ -715,6 +722,7 @@ class SecureChatWindow(QMainWindow):
         sidebar_bg = t.get("sidebar_bg", t["bg_color"])
         accent     = t["accent_color"]
         hover      = self._lighten(accent)
+        on_accent  = self._contrast(accent)   # readable text on accent-coloured buttons
 
         self.setStyleSheet(f"""
             QMainWindow,QWidget{{
@@ -725,12 +733,12 @@ class SecureChatWindow(QMainWindow):
                 border:1px solid {t.get('border_mine','#333')};
                 border-radius:6px;padding:6px 10px;
                 font-family:{t['font_family']};font-size:{t['font_size']}px;}}
-            QPushButton{{background:{accent};color:#000;border:none;
+            QPushButton{{background:{accent};color:{on_accent};border:none;
                 border-radius:6px;padding:6px 12px;font-weight:bold;letter-spacing:1px;}}
             QPushButton:hover{{background:{hover};}}
             QListWidget{{background:{sidebar_bg};border:1px solid {t.get('border_theirs','#222')};
                 border-radius:4px;color:{t['text_color']};}}
-            QListWidget::item:selected{{background:{accent};color:#000;}}
+            QListWidget::item:selected{{background:{accent};color:{on_accent};}}
             QScrollBar:vertical{{background:{t['bg_color']};width:6px;}}
             QScrollBar::handle:vertical{{background:{t.get('border_mine','#333')};border-radius:3px;}}
             QCheckBox{{color:{t['text_color']};}}
@@ -749,6 +757,17 @@ class SecureChatWindow(QMainWindow):
             self.send_btn.setText(t.get("send_label", "Send"))
         if hasattr(self, 'status_lbl'):
             self.status_lbl.setStyleSheet(f"font-size:10px;color:{accent};margin-top:6px;")
+
+    @staticmethod
+    def _contrast(hex_color):
+        """Black or white, whichever reads better on this background colour."""
+        try:
+            h = hex_color.lstrip("#")
+            r, g, b = (int(h[i:i+2], 16) / 255 for i in (0, 2, 4))
+            lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
+            return "#000000" if lum > 0.45 else "#ffffff"
+        except Exception:
+            return "#000000"
 
     @staticmethod
     def _lighten(hex_color):

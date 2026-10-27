@@ -6,6 +6,16 @@ A portable, peer-to-peer encrypted chat application designed for use as a **scre
 
 ---
 
+<p align="center"><img src="docs/dark-teal.png" alt="SecureChat in the Dark Teal theme: a spy conversation ending in a red self-destruct message" width="820"></p>
+
+| Amber Terminal | Clean Light |
+|---|---|
+| ![SecureChat in the Amber Terminal theme](docs/amber-terminal.png) | ![SecureChat in the Clean Light theme: an everyday conversation](docs/clean-light.png) |
+
+*Real screenshots of the running app. The red-bordered bubble is a self-destruct message. The conversations are fictional.*
+
+---
+
 ## What it is
 
 A real, working encrypted chat interface — not a mockup, not a loop. Two devices, one USB stick, actual messages sending and receiving in real time. Built for productions that need something that looks authentic because it *is* authentic.
