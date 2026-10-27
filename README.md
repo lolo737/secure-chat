@@ -80,6 +80,21 @@ All messages stored in a local SQLite database at `~/.securechat/messages.db`. N
 
 ---
 
+## Where it runs
+
+SecureChat is a Python desktop app (PyQt5), so it runs wherever Python and Qt do.
+
+| System | Works? | Notes |
+|---|---|---|
+| macOS 10.15 Catalina | ✅ | The original target |
+| macOS 11 and later (Big Sur to Sequoia), Intel and Apple Silicon | ✅ | Runs natively on both chips |
+| Linux (Ubuntu, Debian, Fedora…) | ✅ | |
+| Windows 10 / 11 | ✅ | |
+| Windows 7 / 8.1 | ⚠️ | Use **Python 3.8**, the last version that supports them, and build the `.exe` on that machine. An `.exe` built on Windows 10 with a newer Python won't start on Windows 7. |
+| Android / iPhone | ❌ | Desktop only for now. A phone can **scan** the pairing QR code, but can't run the chat itself. |
+
+**On Catalina:** if the optional OpenCV install (for reading QR photos) fails, pin an older release: `pip install "opencv-python-headless<4.9"`. Everything else installs as normal.
+
 ## Setup
 
 ```bash
