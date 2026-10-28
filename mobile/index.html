@@ -38,8 +38,15 @@
       <div class="brand small">SECURECHAT</div>
       <div class="muted tiny" id="meLine"></div>
     </div>
-    <button class="icon" id="openSettings" aria-label="Settings">⚙</button>
+    <div class="bar-actions">
+      <button class="icon" id="fullBtn" aria-label="Full screen" title="Full screen" hidden>⛶</button>
+      <button class="icon" id="openSettings" aria-label="Settings">⚙</button>
+    </div>
   </header>
+  <div class="hint" id="iosHint" hidden>
+    <span>For full screen: tap <b>Share</b> <span aria-hidden="true">⬆︎</span> then <b>Add to Home Screen</b>, and open SecureChat from its icon.</span>
+    <button class="icon small-x" id="iosHintX" aria-label="Dismiss">✕</button>
+  </div>
   <div class="pair-row">
     <button class="primary" id="showCode">Show my code</button>
     <button class="primary" id="scanCode">Scan a code</button>
@@ -54,12 +61,12 @@
   <header class="bar">
     <button class="icon" data-back aria-label="Back">‹</button>
     <div class="brand small">SCAN TO PAIR</div>
-    <span></span>
+    <button class="icon close" data-close aria-label="Close">✕</button>
   </header>
   <div class="qr-wrap"><canvas id="qr" width="300" height="300" aria-label="Your pairing QR code"></canvas></div>
   <p class="center" id="codeStatus">On the other phone, tap <b>Scan a code</b> in SecureChat, or point its Camera at this and tap the banner.</p>
   <p class="center muted tiny">Your key is public: safe to show or film. Fingerprint <span id="myFp"></span></p>
-  <div class="pair-row"><button id="copyLink">Copy invite link</button><button id="newCode">New code</button></div>
+  <div class="pair-row"><button id="copyLink">Copy link</button><button id="newCode">New code</button></div>
 </section>
 
 <!-- Camera scanner -->
@@ -67,7 +74,7 @@
   <header class="bar">
     <button class="icon" data-back aria-label="Back">‹</button>
     <div class="brand small">SCANNING</div>
-    <span></span>
+    <button class="icon close" data-close aria-label="Close">✕</button>
   </header>
   <div class="cam"><video id="cam" playsinline muted></video><div class="reticle"></div></div>
   <p class="center" id="scanStatus">Hold the other phone's code inside the square.</p>

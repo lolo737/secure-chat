@@ -1,5 +1,5 @@
 /* Offline shell: the app opens with no signal; messages wait in the outbox until it's back. */
-const CACHE = "securechat-v1";
+const CACHE = "securechat-v2";
 const SHELL = ["./", "index.html", "css/app.css", "js/config.js", "js/core.js", "js/app.js",
   "vendor/nacl-fast.min.js", "vendor/jsQR.js", "vendor/qrcode.js", "manifest.webmanifest", "icons/icon-192.png"];
 self.addEventListener("install", e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())));

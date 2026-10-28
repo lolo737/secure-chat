@@ -45,6 +45,35 @@
     if (push !== false) nav.push(id);
     if (id !== "scan") stopCamera();
   }
+  // ---------- full screen ----------
+  // Android browsers let a page take over the whole screen (after a tap). iPhones only do it
+  // for apps added to the Home Screen, so there we show a one-time tip instead.
+  const UA = navigator.userAgent || "";
+  const isIOS = /iPhone|iPad|iPod/.test(UA) || (/Macintosh/.test(UA) && navigator.maxTouchPoints > 1);
+  const isAndroid = /Android/i.test(UA);
+  const installed = (window.matchMedia && matchMedia("(display-mode: standalone), (display-mode: fullscreen)").matches) || navigator.standalone === true;
+  const canFull = !isIOS && !installed && !!(document.documentElement.requestFullscreen && document.fullscreenEnabled);
+  function enterFull() {
+    if (!canFull || !isAndroid || document.fullscreenElement) return;
+    document.documentElement.requestFullscreen({ navigationUI: "hide" }).catch(() => {});
+  }
+  function exitFull() { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); }
+  function setupFullUI() {
+    const btn = $("fullBtn");
+    btn.hidden = !canFull;
+    btn.onclick = () => (document.fullscreenElement ? exitFull() : document.documentElement.requestFullscreen({ navigationUI: "hide" }).catch(() => toast("This browser won't go full screen")));
+    document.addEventListener("fullscreenchange", () => { btn.textContent = document.fullscreenElement ? "⤡" : "⛶"; btn.setAttribute("aria-label", document.fullscreenElement ? "Exit full screen" : "Full screen"); });
+    let dismissed = false; try { dismissed = localStorage.getItem("sc-ios-hint") === "1"; } catch (e) {}
+    $("iosHint").hidden = !(isIOS && !installed && !dismissed);
+    $("iosHintX").onclick = () => { $("iosHint").hidden = true; try { localStorage.setItem("sc-ios-hint", "1"); } catch (e) {} };
+  }
+
+  // The big X on the code and camera screens: straight home, out of full screen.
+  document.addEventListener("click", e => {
+    if (!e.target.closest("[data-close]")) return;
+    exitFull(); renderHome(); nav.length = 0; nav.push("home"); show("home", false);
+  });
+
   document.addEventListener("click", e => {
     if (!e.target.closest("[data-back]")) return;
     nav.pop();
@@ -291,12 +320,13 @@
     location.replace(location.pathname);
   };
 
-  $("showCode").onclick = () => showCode(false);
+  $("showCode").onclick = () => { enterFull(); showCode(false); };
   $("newCode").onclick = () => showCode(true);
-  $("scanCode").onclick = startScan;
+  $("scanCode").onclick = () => { enterFull(); startScan(); };
 
   // ---------- boot ----------
   function boot() {
+    setupFullUI();
     for (const list of Object.values(S.msgs)) for (const m of list) delete m.burning; // a burn interrupted by closing the app restarts
     applyTheme(S.theme);
     for (const p of S.peers) connect(p.room);

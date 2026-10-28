@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node relay/server.js",
     "test": "node --test mobile/test/core.test.js mobile/test/relay.test.js",
-    "test:phones": "node mobile/test/phones.e2e.js"
+    "test:phones": "node mobile/test/phones.e2e.js",
+    "test:screens": "node mobile/test/screens.e2e.js"
   },
   "dependencies": {
     "ws": "^8.18.0"
